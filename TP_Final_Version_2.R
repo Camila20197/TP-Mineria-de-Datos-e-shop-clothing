@@ -1,0 +1,739 @@
+#library("dplyr")
+library("tidyverse")
+library("skimr")
+library("ggplot2")
+library("sf")
+library("rnaturalearth")
+library("networkD3")
+library("arules")
+library("arulesViz")
+library("arulesSequences")
+
+
+df = read.csv2("./data/e-shop clothing 2008.csv")
+
+# ============================================================
+# ACTIVIDAD a: Exploración de Datos
+# ============================================================
+
+#Primera visualizacion de los datos
+str(df)
+
+#Con el uso de la libreria skimr realizamos un summary que hace un analisis mas profundo de las variables.
+#Realizamos un primer summary para ver que tenemos dentro
+
+skim(df)
+
+#Explorando el dataframe observamos que los datos están en formato single
+
+names(df)[names(df) == "page.1..main.category."] <- "main_category"
+names(df)[names(df) == "page.2..clothing.model."] <- "clothing_model"
+names(df)[names(df) == "model.photography"] <- "model_photography"
+names(df)[names(df) == "session.ID"] <- "session_id"
+
+
+# 1. Categoría Principal de la Ropa
+df$main_category <- factor(
+  df$main_category,
+  levels = c(1, 2, 3, 4),
+  labels = c("Trousers", "Skirts", "Blouses", "Sale")
+)
+
+# 2. Color del Producto
+df$colour <- factor(
+  df$colour,
+  levels = 1:14,
+  labels = c("Beige", "Black", "Blue", "Brown", "Burgundy",
+             "Gray", "Green", "Navy Blue", "Polyamide",
+             "Purple", "Red", "White", "Yellow", "Other")
+)
+
+# 3. Ubicación en la Pantalla
+df$location <- factor(
+  df$location,
+  levels = 1:6,
+  labels = c("Top left", "Top middle", "Top right",
+             "Bottom left", "Bottom middle", "Bottom right")
+)
+
+# 4. Fotografía del Modelo
+df$model_photography <- factor(
+  df$model_photography,
+  levels = c(1, 2),
+  labels = c("En face", "Profile")
+)
+
+# 5. Categoría de Precio (1 = Mayor al promedio, 2 = Menor al promedio)
+df$price.2 <- factor(
+  df$price.2,
+  levels = c(1, 2),
+  labels = c("Above average", "Below average")
+)
+
+# 6. País de origen (Country)
+# Convierte los códigos del 1 al 47 en sus nombres reales correspondientes
+df$country <- factor(
+  df$country,
+  levels = 1:47,
+  labels = c(
+    "Australia", "Austria", "Belgium", "British Virgin Islands",
+    "Cayman Islands", "Christmas Island", "Croatia", "Cyprus",
+    "Czech Republic", "Denmark", "Estonia", "Unidentified",
+    "Faroe Islands", "Finland", "France", "Germany",
+    "Greece", "Hungary", "Iceland", "India",
+    "Ireland", "Italy", "Latvia", "Lithuania",
+    "Luxembourg", "Mexico", "Netherlands", "Norway",
+    "Poland", "Portugal", "Romania", "Russia",
+    "San Marino", "Slovakia", "Slovenia", "Spain",
+    "Sweden", "Switzerland", "Ukraine", "United Arab Emirates",
+    "United Kingdom", "USA", "biz", "com",
+    "int", "net", "org"
+  )
+)
+
+# 7. Modelo de Ropa (Ej. "A13")
+# Ya contiene letras, pero es bueno que R lo trate como categoría.
+df$clothing_model <- as.factor(df$clothing_model)
+
+# Revisamos la estructura del dataframe para confirmar los cambios
+str(df$colour)
+
+summary(df$country)
+
+#Eliminamos la variable año ya que no aporta información relevante a nuestro estudio
+df <- df %>% select(-year)
+
+#Pasamos la variable session id a factor
+df$session_id <- as.factor(df$session_id)
+
+#Controlamos los cambios realizados
+str(df)
+
+#Volvemos a realizar un análisis estadístico a los datos luego de ser procesados 
+skim(df)
+
+
+# ============================================================
+# ACTIVIDAD b: Análisis Gráfico
+# ============================================================
+
+#¿Los usuarios exploran mucho o abandonan rápido?
+
+summary(df$order)
+
+clicks_sesion <- df %>%
+  group_by(session_id) %>%
+  summarise(order = n())
+
+
+ggplot(clicks_sesion, aes(x = order)) +
+  geom_histogram(
+    bins = 30,
+    fill = "#7FFFD4",
+    color = "white"
+  ) +
+  geom_density(
+    aes(y = after_stat(count)),
+    color = "#CD2626",
+    linewidth = 1
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribución de clicks por sesión",
+    subtitle = "Comportamiento de navegación de los usuarios",
+    x = "Cantidad de clicks",
+    y = "Frecuencia"
+  )
+
+#¿Qué tan diversa es la exploración de productos?
+
+exploracion <- df %>%
+  group_by(session_id) %>%
+  summarise(
+    order = n(),
+    productos = n_distinct(clothing_model)
+  )
+
+ggplot(exploracion,
+       aes(x = order,
+           y = productos)) +
+  geom_point(
+    alpha = 0.4,
+    color = "#D95F0E"
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "darkblue"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Exploración de productos por sesión",
+    subtitle = "Relación entre navegación y diversidad de productos",
+    x = "Cantidad de clicks",
+    y = "Productos distintos"
+  )
+
+#¿Qué categorías son más fuertes en cada país?
+
+top_paises <- df %>%
+  count(country, sort = TRUE) %>%
+  slice_head(n = 20) %>%
+  pull(country)
+
+pais_categoria <- df %>%
+  filter(country %in% top_paises) %>%
+  count(country, main_category)
+
+ggplot(pais_categoria,
+       aes(x = main_category,
+           y = reorder(country, n),
+           fill = n)) +
+  
+  geom_tile(color = "white") +
+  
+  scale_fill_gradient(
+    low = "#F7FBFF",
+    high = "#08306B"
+  ) +
+  
+  labs(
+    title = "Interés por categoría según país",
+    subtitle = "Top 20 países con mayor actividad",
+    x = "Categoría",
+    y = "País",
+    fill = "Clicks"
+  ) +
+  
+  theme_minimal() +
+  
+  theme(
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(face = "bold")
+  )
+
+# ¿Qué países generan más tráfico?
+
+library("rnaturalearth")
+sesiones_pais <- df %>%
+   distinct(session_id, country) %>%
+   count(country)
+ 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+map_data <- world %>%
+  left_join(sesiones_pais,
+            by = c("name" = "country"))
+
+ggplot(map_data) +
+  geom_sf(aes(fill = n)) +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+# Precio vs Clicks
+
+clicks_producto <- df %>%
+  
+  group_by(clothing_model, price.2) %>%
+  
+  summarise(
+    order = n(),
+    .groups = "drop"
+  )
+
+ggplot(clicks_producto,
+       aes(x = price.2,
+           y = order,
+           fill = price.2)) +
+  
+  geom_boxplot(alpha = 0.7) +
+  
+  scale_fill_manual(values = c(
+    "#2C7FB8",
+    "#41AB5D"
+  )) +
+  
+  labs(
+    title = "Distribución de clicks según rango de precio",
+    subtitle = "Comparación entre productos caros y económicos",
+    x = "Precio",
+    y = "Cantidad de clicks"
+  ) +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none"
+  )
+
+#Precio vs Exploración
+
+exploracion_precio <- df %>%
+  
+  group_by(session_id, price.2) %>%
+  
+  summarise(
+    productos_distintos = n_distinct(clothing_model),
+    order = n(),
+    .groups = "drop"
+  )
+
+ggplot(exploracion_precio,
+       aes(x = order,
+           y = productos_distintos,
+           color = price.2)) +
+  
+  geom_point(
+    alpha = 0.5,
+    size = 3
+  ) +
+  
+  geom_smooth(
+    method = "lm",
+    se = FALSE
+  ) +
+  
+  scale_color_manual(values = c(
+    "#D95F0E",
+    "#2C7FB8"
+  )) +
+  
+  labs(
+    title = "Exploración de productos según precio",
+    subtitle = "Relación entre clicks y diversidad de productos",
+    x = "Cantidad de clicks",
+    y = "Productos distintos",
+    color = "Precio"
+  ) +
+  
+  theme_minimal()
+
+#categorías/países
+
+# Contar combinaciones
+heatmap_data <- df %>%
+  count(location, main_category)
+
+# Heatmap
+ggplot(
+  heatmap_data,
+  
+  aes(
+    x = main_category,
+    y = location,
+    fill = n
+  )
+) +
+  
+  geom_tile(
+    color = "white",
+    linewidth = 0.5
+  ) +
+  
+  geom_text(
+    aes(label = n),
+    color = "white",
+    size = 4
+  ) +
+  
+  scale_fill_gradient(
+    low = "#9ECAE1",
+    high = "#08519C"
+  ) +
+  
+  labs(
+    title = "Interacción entre ubicación y categoría",
+    subtitle = "Distribución de clicks según posición en pantalla",
+    x = "Categoría",
+    y = "Ubicación",
+    fill = "Clicks"
+  ) +
+  
+  theme_minimal() +
+  
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16
+    ),
+    
+    axis.text.x = element_text(
+      angle = 20,
+      hjust = 1
+    ),
+    
+    panel.grid = element_blank()
+  )
+
+# =========================================================
+# 1. Crear secuencias de navegación
+# =========================================================
+
+flujo <- df %>%
+  
+  arrange(session_id, order) %>%
+  
+  group_by(session_id) %>%
+  
+  mutate(
+    siguiente_categoria = lead(main_category)
+  ) %>%
+  
+  ungroup() %>%
+  
+  filter(!is.na(siguiente_categoria))
+
+# =========================================================
+# 2. Contar transiciones
+# =========================================================
+
+links <- flujo %>%
+  
+  count(
+    main_category,
+    siguiente_categoria,
+    sort = TRUE
+  )
+
+# =========================================================
+# 3. ELIMINAR auto-conexiones
+# =========================================================
+
+links <- links %>%
+  
+  filter(main_category != siguiente_categoria)
+
+# =========================================================
+# 4. Quedarse SOLO con las más frecuentes
+# =========================================================
+
+links <- links %>%
+  
+  slice_max(n, n = 6)
+
+# =========================================================
+# 5. Crear nodos
+# =========================================================
+
+nodos <- data.frame(
+  name = unique(c(
+    links$main_category,
+    links$siguiente_categoria
+  ))
+)
+
+# =========================================================
+# 6. Crear índices
+# =========================================================
+
+links$source <- match(
+  links$main_category,
+  nodos$name
+) - 1
+
+links$target <- match(
+  links$siguiente_categoria,
+  nodos$name
+) - 1
+
+# =========================================================
+# 7. Sankey limpio
+# =========================================================
+
+sankeyNetwork(
+  Links = links,
+  Nodes = nodos,
+  
+  Source = "source",
+  Target = "target",
+  Value = "n",
+  NodeID = "name",
+  
+  fontSize = 18,
+  nodeWidth = 40,
+  sinksRight = TRUE
+)
+
+# ============================================================
+# ACTIVIDAD c: Evolución de los clicks de navegación a lo largo de los meses
+# ============================================================
+
+evolucion_clicks <- df %>%
+  group_by(month) %>%
+  summarise(total_clicks = n()) %>%
+  arrange(month) # Aseguramos que estén en orden cronológico
+
+# Ver la tabla en consola
+print(evolucion_clicks)
+
+# 2. Visualizar la evolución con ggplot2
+ggplot(evolucion_clicks, aes(x = as.factor(month), y = total_clicks, group = 1)) +
+  geom_line(color = "steelblue", size = 1.2) +
+  geom_point(color = "darkred", size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Evolución de los Clicks de Navegación",
+    subtitle = "De abril (4) a agosto (8) de 2008",
+    x = "Mes",
+    y = "Cantidad Total de Clicks"
+  )
+
+# ============================================================
+# ACTIVIDAD d: Número de transacciones e ítems
+# ============================================================
+
+# Número de transacciones (sesiones únicas)
+numero_transacciones <- n_distinct(df$session_id)
+
+# Número total de ítems (total de clicks en el dataframe)
+numero_items_total <- nrow(df)
+
+cat("Total de transacciones (sesiones):", numero_transacciones, "\n")
+cat("Total de ítems interactuados:", numero_items_total, "\n\n")
+
+#. Detalle por Transacción (Preparación para Market Basket Analysis) ---
+
+# Agrupamos por sesión para ver cuántos y cuáles ítems tiene cada transacción
+detalle_transacciones <- df %>%
+  group_by(session_id) %>%
+  summarise(
+    cantidad_items = n(), # Cuántos ítems tiene esta sesión
+    # Juntamos los modelos de ropa consultados separados por coma
+    lista_items = paste(clothing_model, collapse = ", ") 
+  ) %>%
+  ungroup()
+
+# Ver las primeras 10 transacciones
+head(detalle_transacciones, 10)
+
+# Un pequeño extra: ¿Cuál es el promedio de ítems por sesión?
+summary(detalle_transacciones$cantidad_items)
+
+# ============================================================
+# ACTIVIDAD e: Conjunto de itemsets frecuentes
+# ============================================================
+
+# Se realizarán los items set frecuentes teniendo en cuenta las categarías principales 
+# y otras características
+
+# Primero análizamos solo las catagorías principales
+df_general <- df %>%
+  select(session_id, main_category) %>%
+  # Eliminar duplicados en la misma sesión
+  distinct(session_id, main_category) %>%
+  group_by(session_id) %>%
+  summarise(
+    items = list(as.character(main_category)),
+    .groups = "drop"
+  )
+
+# Convertir a transacciones
+transacciones_general <- as(df_general$items, "transactions")
+
+# Resumen
+summary(transacciones_general)
+# Verás: 4 ítems únicos (trousers, skirts, blouses, sale)
+
+# Apriori
+cat("APRIORI")
+tiempo_apriori_general <- system.time({
+  itemsets_general_apriori <- apriori(
+    transacciones_general,
+    parameter = list(support = 0.02, minlen = 2, target = "frequent")
+  )
+})
+
+# ECLAT para el mismo conjunto
+cat("ECLAT")
+tiempo_eclat_general <- system.time({
+  itemsets_general_eclat <- eclat(
+    transacciones_general,
+    parameter = list(support = 0.02, minlen = 2, target = "frequent")
+  )
+})
+
+# Comparar resultados
+cat("COMPARACIÓN GENERAL:")
+cat("Apriori:", length(itemsets_general_apriori), "itemsets | Tiempo:", tiempo_apriori_general[3], "seg\n")
+cat("ECLAT :", length(itemsets_general_eclat), "itemsets | Tiempo:", tiempo_eclat_general[3], "seg\n")
+
+# Verificar si son iguales (deberían serlo)
+if (length(itemsets_general_apriori) == length(itemsets_general_eclat)) {
+  cat("Ambos algoritmos encontraron los mismos itemsets\n")
+} else {
+  cat("Diferencia en cantidad de itemsets. Revisar parámetros.")
+}
+
+# Mostrar top 10 de cada uno
+cat("TOP 10 - APRIORI")
+inspect(head(sort(itemsets_general_apriori, by = "support"), 10))
+
+cat("TOP 10 - ECLAT ")
+inspect(head(sort(itemsets_general_eclat, by = "support"), 10))
+
+# Crear ítems (categoría + modelo)
+df_categoria_modelo <- df %>%
+  select(session_id, main_category, clothing_model) %>%
+  mutate(item = paste(main_category, clothing_model, sep = "_")) %>%
+  distinct(session_id, item) %>%  
+  group_by(session_id) %>%
+  summarise(
+    items = list(item),
+    .groups = "drop"
+  )
+
+# Convertir a transacciones
+transacciones_categoria_modelo <- as(df_categoria_modelo$items, "transactions")
+
+# Resumen
+summary(transacciones_categoria_modelo)
+# Verás: ~217 ítems únicos (todos los productos)
+
+cat("categoría + modelo - APRIORI")
+tiempo_apriori_especifico <- system.time({
+  itemsets_especifico_apriori <- apriori(
+    transacciones_categoria_modelo,
+    parameter = list(support = 0.02, minlen = 2, target = "frequent")
+  )
+})
+
+cat("categoría + modelo - ECLAT")
+tiempo_eclat_especifico <- system.time({
+  itemsets_especifico_eclat <- eclat(
+    transacciones_categoria_modelo,
+    parameter = list(support = 0.02, minlen = 2, target = "frequent")
+  )
+})
+
+cat("Apriori:", length(itemsets_especifico_apriori), "itemsets | Tiempo:", tiempo_apriori_especifico[3], "seg\n")
+cat("ECLAT :", length(itemsets_especifico_eclat), "itemsets | Tiempo:", tiempo_eclat_especifico[3], "seg\n")
+
+# Mostrar top 10 de cada uno
+cat("TOP 10 - APRIORI")
+inspect(head(sort(itemsets_especifico_apriori, by = "support"), 10))
+
+cat("TOP 10 - ECLAT ")
+inspect(head(sort(itemsets_especifico_eclat, by = "support"), 10))
+
+
+# Crear ítems (categoria + color) - SIN ACENTOS
+df_categoria_color <- df %>%
+  select(session_id, main_category, colour) %>%
+  mutate(item = paste(main_category, colour, sep = "_")) %>%
+  distinct(session_id, item) %>%
+  group_by(session_id) %>%
+  summarise(
+    items = list(item),
+    .groups = "drop"
+  )
+
+# Convertir a transacciones
+transacciones_categoria_color <- as(df_categoria_color$items, "transactions")
+
+# Resumen
+summary(transacciones_categoria_color)
+
+cat("(categoria + color) - APRIORI")
+tiempo_apriori_moda <- system.time({
+  itemsets_moda_apriori <- apriori(
+    transacciones_categoria_color,
+    parameter = list(support = 0.02, minlen = 2, maxlen = 3, target = "frequent")
+  )
+})
+
+cat("(categoria + color) - ECLAT")
+tiempo_eclat_moda <- system.time({
+  itemsets_moda_eclat <- eclat(
+    transacciones_categoria_color,
+    parameter = list(support = 0.02, minlen = 2, maxlen = 3, target = "frequent")
+  )
+})
+
+cat("Apriori:", length(itemsets_moda_apriori), "itemsets | Tiempo:", tiempo_apriori_moda[3], "seg\n")
+cat("ECLAT :", length(itemsets_moda_eclat), "itemsets | Tiempo:", tiempo_eclat_moda[3], "seg\n")
+
+# Top 10
+cat("TOP 10 - APRIORI")
+inspect(head(sort(itemsets_moda_apriori, by = "support"), 10))
+
+cat("TOP 10 - ECLAT")
+inspect(head(sort(itemsets_moda_eclat, by = "support"), 10))
+
+# Analisis de colores
+if (length(itemsets_moda_eclat) > 0) {
+  df_moda_itemsets <- as(sort(itemsets_moda_eclat, by = "support"), "data.frame")
+  
+  colores_mencionados <- df_moda_itemsets %>%
+    separate_rows(items, sep = ", ") %>%
+    mutate(color = str_extract(items, "_[^_]+$") %>% str_remove("^_")) %>%
+    filter(!is.na(color)) %>%
+    count(color, sort = TRUE)
+  
+  cat(" COLORES MAS FRECUENTES EN COMBINACIONES:")
+  print(head(colores_mencionados, 10))
+}
+
+
+# ============================================================
+# ACTIVIDAD i: Minería de Secuencias Frecuentes
+# ============================================================
+
+# Preparar datos para secuencias (solo categorías)
+
+df_secuencias <- df %>%
+  select(session_id, order, main_category) %>%
+  rename(sequenceID = session_id, eventID = order, item = main_category) %>%
+  mutate(
+    sequenceID = as.integer(sequenceID),
+    eventID = as.integer(eventID),
+    item = as.character(item),
+    SIZE = 1
+  ) %>%
+  filter(!is.na(item))
+
+# Guardar a archivo temporal
+temp_file <- tempfile()
+write.table(
+  df_secuencias[, c("sequenceID", "eventID", "SIZE", "item")],
+  file = temp_file,
+  row.names = FALSE, col.names = FALSE, sep = " "
+)
+
+# Leer como secuencias
+secuencias <- read_baskets(temp_file, info = c("sequenceID", "eventID", "SIZE"))
+
+# Encontrar secuencias frecuentes con cSPADE
+
+secuencias_frecuentes <- cspade(
+  secuencias,
+  parameter = list(
+    support = 0.02,    # Soporte mínimo 2%
+    maxlen = 5,        # Máximo 5 elementos
+    mingap = 1,        # Mínimo 1 evento de diferencia
+    maxgap = 10
+  ),
+  control = list(verbose = TRUE)
+)
+
+cat("Secuencias frecuentes encontradas:", length(secuencias_frecuentes), "\n")
+
+# Ordenar y mostrar top 15
+secuencias_ordenadas <- sort(secuencias_frecuentes, by = "support", decreasing = TRUE)
+cat(" TOP 15 SECUENCIAS:")
+inspect(secuencias_ordenadas[1:min(15, length(secuencias_ordenadas))])
+
+# Generar reglas secuenciales 
+reglas_secuenciales <- ruleInduction(
+  secuencias_frecuentes,
+  confidence = 0.3
+)
+
+cat("REGLAS SECUENCIALES:", length(reglas_secuenciales))
+if (length(reglas_secuenciales) > 0) {
+  reglas_ordenadas <- sort(reglas_secuenciales, by = "confidence", decreasing = TRUE)
+  inspect(head(reglas_ordenadas, 10))
+}
+
+# 4. Limpiar archivo temporal
+
+unlink(temp_file)
