@@ -4,6 +4,9 @@ library("skimr")
 
 df = read.csv2("./data/e-shop clothing 2008.csv")
 
+# Leer los datos
+df <- read.csv2("./data/e-shop clothing 2008.csv")
+
 #Primera visualizacion de los datos
 str(df)
 
@@ -11,90 +14,6 @@ str(df)
 #Realizamos un primer summary para ver que tenemos dentro
 
 skim(df)
-
-
-#_______________________________________________________________________________________________________
-#Esta en formato single
-
-names(df)[names(df) == "page.1..main.category."] <- "main_category"
-names(df)[names(df) == "page.2..clothing.model."] <- "clothing_model"
-names(df)[names(df) == "model.photography"] <- "model_photography"
-names(df)[names(df) == "session.ID"] <- "session_id"
-
-
-# 1. Categoría Principal de la Ropa
-df$main_category <- factor(
-  df$main_category,
-  levels = c(1, 2, 3, 4),
-  labels = c("Trousers", "Skirts", "Blouses", "Sale")
-)
-
-# 2. Color del Producto
-df$colour <- factor(
-  df$colour,
-  levels = 1:14,
-  labels = c("Beige", "Black", "Blue", "Brown", "Burgundy",
-             "Gray", "Green", "Navy Blue", "Polyamide",
-             "Purple", "Red", "White", "Yellow", "Other")
-)
-
-# 3. Ubicación en la Pantalla
-df$location <- factor(
-  df$location,
-  levels = 1:6,
-  labels = c("Top left", "Top middle", "Top right",
-             "Bottom left", "Bottom middle", "Bottom right")
-)
-
-# 4. Fotografía del Modelo
-df$model_photography <- factor(
-  df$model_photography,
-  levels = c(1, 2),
-  labels = c("En face", "Profile")
-)
-
-# 5. Categoría de Precio (1 = Mayor al promedio, 2 = Menor al promedio)
-df$price.2 <- factor(
-  df$price.2,
-  levels = c(1, 2),
-  labels = c("Above average", "Below average")
-)
-
-# 6. País de origen (Country)
-# Convierte los códigos del 1 al 47 en sus nombres reales correspondientes
-df$country <- factor(
-  df$country,
-  levels = 1:47,
-  labels = c(
-    "Australia", "Austria", "Belgium", "British Virgin Islands",
-    "Cayman Islands", "Christmas Island", "Croatia", "Cyprus",
-    "Czech Republic", "Denmark", "Estonia", "Unidentified",
-    "Faroe Islands", "Finland", "France", "Germany",
-    "Greece", "Hungary", "Iceland", "India",
-    "Ireland", "Italy", "Latvia", "Lithuania",
-    "Luxembourg", "Mexico", "Netherlands", "Norway",
-    "Poland", "Portugal", "Romania", "Russia",
-    "San Marino", "Slovakia", "Slovenia", "Spain",
-    "Sweden", "Switzerland", "Ukraine", "United Arab Emirates",
-    "United Kingdom", "USA", "biz", "com",
-    "int", "net", "org"
-  )
-)
-
-# 7. Modelo de Ropa (Ej. "A13")
-# Ya contiene letras, pero es bueno que R lo trate como categoría.
-df$clothing_model <- as.factor(df$clothing_model)
-
-# Revisamos la estructura del dataframe para confirmar los cambios
-str(df$colour)
-
-summary(df$country)
--------------------------------------------------------------------------------------------
-library(dplyr)
-library(tidyverse)
-
-# Leer los datos
-df <- read.csv2("./data/e-shop clothing 2008.csv")
 
 # Diccionario de mapeo de países
 country_mapping <- tibble(
@@ -172,3 +91,54 @@ df_clean <- df %>%
 # Verificar la estructura final
 str(df_clean)
 skim(df_clean)
+
+#C. Evolución de los clicks de navegación a lo largo de los meses ---
+
+evolucion_clicks <- df_clean %>%
+  group_by(mes) %>%
+  summarise(total_clicks = n()) %>%
+  arrange(mes) # Aseguramos que estén en orden cronológico
+
+# Ver la tabla en consola
+print(evolucion_clicks)
+
+# 2. Visualizar la evolución con ggplot2
+ggplot(evolucion_clicks, aes(x = as.factor(mes), y = total_clicks, group = 1)) +
+  geom_line(color = "steelblue", size = 1.2) +
+  geom_point(color = "darkred", size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Evolución de los Clicks de Navegación",
+    subtitle = "De abril (4) a agosto (8) de 2008",
+    x = "Mes",
+    y = "Cantidad Total de Clicks"
+  )
+
+#D. Número de transacciones e ítems ---
+
+# Número de transacciones (sesiones únicas)
+numero_transacciones <- n_distinct(df_clean$id_sesion)
+
+# Número total de ítems (total de clicks en el dataframe)
+numero_items_total <- nrow(df_clean)
+
+cat("Total de transacciones (sesiones):", numero_transacciones, "\n")
+cat("Total de ítems interactuados:", numero_items_total, "\n\n")
+
+#. Detalle por Transacción (Preparación para Market Basket Analysis) ---
+
+# Agrupamos por sesión para ver cuántos y cuáles ítems tiene cada transacción
+detalle_transacciones <- df_clean %>%
+  group_by(id_sesion) %>%
+  summarise(
+    cantidad_items = n(), # Cuántos ítems tiene esta sesión
+    # Juntamos los modelos de ropa consultados separados por coma
+    lista_items = paste(modelo_ropa, collapse = ", ") 
+  ) %>%
+  ungroup()
+
+# Ver las primeras 10 transacciones
+head(detalle_transacciones, 10)
+
+# Un pequeño extra: ¿Cuál es el promedio de ítems por sesión?
+summary(detalle_transacciones$cantidad_items)
