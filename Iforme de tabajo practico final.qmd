@@ -1,26 +1,85 @@
 ---
-title: "Informe del trabajo practico final"
-format: html
-editor: visual
+title: "Análisis de comportamiento de usuarios en ecommerce"
+subtitle: "Trabajo Práctico Final - Minería de Datos"
+author:
+  - Camila Durand
+  - Mateo Troncoso
+date: today
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry: margin=2.5cm
+    fontsize: 11pt
+
+execute:
+  warning: false
+  message: false
 ---
 
-## Quarto
+# Introducción
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+En la actualidad, las plataformas de comercio electrónico generan grandes volúmenes de datos relacionados con la navegación e interacción de los usuarios. El análisis de estos datos permite comprender patrones de comportamiento, preferencias de consumo y recorridos de exploración dentro de una tienda online.
 
-## Running Code
+La minería de datos aplicada al comercio electrónico permite identificar relaciones entre productos, descubrir patrones frecuentes de navegación y generar conocimiento útil para estrategias de marketing, sistemas de recomendación y técnicas de cross-selling.
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+En el presente trabajo se analizará un conjunto de datos perteneciente a una tienda online de ropa correspondiente al año 2008. A partir de técnicas de análisis exploratorio, visualización de datos, minería de itemsets frecuentes, reglas de asociación y análisis secuencial, se buscará comprender cómo interactúan los usuarios con los productos y categorías del sitio web.
 
-```{r}
-1 + 1
-```
+Además, se estudiarán diferencias de comportamiento entre distintos países y se analizará la influencia de variables como ubicación visual, categoría y rango de precio en la exploración de productos.
 
-You can add options to executable code like this
+# Objetivos
 
-```{r}
-#| echo: false
-2 * 2
-```
+## Objetivo General
 
-The `echo: false` option disables the printing of code (only output is displayed).
+Descubrir patrones de comportamiento de navegación dentro de una tienda online de ropa con el fin de generar conocimiento útil para sistemas de recomendación, estrategias de cross-selling y análisis de comportamiento de usuarios.
+
+## Objetivos Específicos
+
+1.  Identificar productos que suelen visualizarse conjuntamente
+
+2.  Detectar combinaciones de productos relevantes para campañas de cross-selling
+
+3.  Comparar hábitos de navegación entre países
+
+4.  Encontrar secuencias típicas de exploración de productos
+
+5.  Generar conocimiento para sistemas de recomendación
+
+## Origen y Características
+
+El dataset proviene del repositorio UCI y contiene información de navegación de una tienda online polaca de ropa para embarazadas durante 5 meses del año 2008.
+
+| Característica       | Valor               |
+|:---------------------|:--------------------|
+| Período              | Abril - Agosto 2008 |
+| Registros totales    | 165,474             |
+| Sesiones únicas      | 24,026              |
+| Productos distintos  | 217                 |
+| Países representados | 42                  |
+
+# Exploración y Preparación de Datos 
+
+## Limpieza Inicial
+
+**\
+Decisiones de limpieza:**
+
+- Se eliminó la variable `year` porque todos los registros son de 2008.
+
+- Se filtraron los códigos de dominio de red 43 al 47 de la variable `country ya que no representan a ningun país.`
+
+- Se transformaron variables numéricas a factores a etiquetas descriptivas.
+
+- La etiqueta del id de session la pasamos de tipo numérico a factor para implementar de manera efectiva los algoritmos correspondientes.
+
+## Estadísticas Descriptivas
+
+| Estadístico | Clicks por sesión | Precio (USD) |
+|:------------|:------------------|:-------------|
+| Mínimo      | 1                 | 18           |
+| Mediana     | 6                 | 43           |
+| Media       | 9.8               | 43.8         |
+| Máximo      | 195               | 82           |
+
+**Observación clave:** La distribución de clicks por sesión está fuertemente sesgada a la derecha (media 9.8, mediana 6), indicando que la mayoría de los usuarios realizan navegaciones cortas, mientras que una minoría explora extensivamente.
