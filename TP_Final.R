@@ -103,13 +103,13 @@ evolucion_clicks <- df_clean %>%
 print(evolucion_clicks)
 
 # 2. Visualizar la evolución con ggplot2
-ggplot(evolucion_clicks, aes(x = as.factor(mes), y = total_clicks, group = 1)) +
-  geom_line(color = "steelblue", size = 1.2) +
+ggplot(evolucion_clicks, aes(x = mes, y = total_clicks)) +
+  geom_line(color = "steelblue", linewidth = 1.2) +
   geom_point(color = "darkred", size = 3) +
   theme_minimal() +
   labs(
     title = "Evolución de los Clicks de Navegación",
-    subtitle = "De abril (4) a agosto (8) de 2008",
+    subtitle = "De abril a agosto de 2008",
     x = "Mes",
     y = "Cantidad Total de Clicks"
   )
@@ -142,3 +142,18 @@ head(detalle_transacciones, 10)
 
 # Un pequeño extra: ¿Cuál es el promedio de ítems por sesión?
 summary(detalle_transacciones$cantidad_items)
+
+#Histograma para corroborrar la distribución de items por transacción.
+ggplot(detalle_transacciones,
+       aes(x = cantidad_items)) +
+  geom_histogram(
+    bins = 30,
+    fill = "purple",
+    color = "white"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribución de ítems por transacción",
+    x = "Cantidad de ítems",
+    y = "Frecuencia"
+  )

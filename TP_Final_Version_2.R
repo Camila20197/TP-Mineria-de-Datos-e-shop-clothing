@@ -1,4 +1,4 @@
-#library("dplyr")
+library("dplyr")
 library("tidyverse")
 library("skimr")
 library("ggplot2")
@@ -26,92 +26,73 @@ skim(df)
 
 #Explorando el dataframe observamos que los datos están en formato single
 
-names(df)[names(df) == "page.1..main.category."] <- "main_category"
-names(df)[names(df) == "page.2..clothing.model."] <- "clothing_model"
-names(df)[names(df) == "model.photography"] <- "model_photography"
-names(df)[names(df) == "session.ID"] <- "session_id"
+# ============================================================
+# LIMPIEZA Y PREPARACIÓN DE DATOS
+# ============================================================
 
-
-# 1. Categoría Principal de la Ropa
-df$main_category <- factor(
-  df$main_category,
-  levels = c(1, 2, 3, 4),
-  labels = c("Trousers", "Skirts", "Blouses", "Sale")
-)
-
-# 2. Color del Producto
-df$colour <- factor(
-  df$colour,
-  levels = 1:14,
-  labels = c("Beige", "Black", "Blue", "Brown", "Burgundy",
-             "Gray", "Green", "Navy Blue", "Polyamide",
-             "Purple", "Red", "White", "Yellow", "Other")
-)
-
-# 3. Ubicación en la Pantalla
-df$location <- factor(
-  df$location,
-  levels = 1:6,
-  labels = c("Top left", "Top middle", "Top right",
-             "Bottom left", "Bottom middle", "Bottom right")
-)
-
-# 4. Fotografía del Modelo
-df$model_photography <- factor(
-  df$model_photography,
-  levels = c(1, 2),
-  labels = c("En face", "Profile")
-)
-
-# 5. Categoría de Precio (1 = Mayor al promedio, 2 = Menor al promedio)
-df$price.2 <- factor(
-  df$price.2,
-  levels = c(1, 2),
-  labels = c("Above average", "Below average")
-)
-
-# 6. País de origen (Country)
-# Convierte los códigos del 1 al 47 en sus nombres reales correspondientes
-df$country <- factor(
-  df$country,
-  levels = 1:47,
-  labels = c(
-    "Australia", "Austria", "Belgium", "British Virgin Islands",
-    "Cayman Islands", "Christmas Island", "Croatia", "Cyprus",
-    "Czech Republic", "Denmark", "Estonia", "Unidentified",
-    "Faroe Islands", "Finland", "France", "Germany",
-    "Greece", "Hungary", "Iceland", "India",
-    "Ireland", "Italy", "Latvia", "Lithuania",
-    "Luxembourg", "Mexico", "Netherlands", "Norway",
-    "Poland", "Portugal", "Romania", "Russia",
-    "San Marino", "Slovakia", "Slovenia", "Spain",
-    "Sweden", "Switzerland", "Ukraine", "United Arab Emirates",
-    "United Kingdom", "USA", "biz", "com",
-    "int", "net", "org"
+df <- df %>%
+  # 1. Renombrar estrictamente las variables conflictivas
+  rename(
+    main_category = page.1..main.category.,
+    clothing_model = page.2..clothing.model.,
+    model_photography = model.photography,
+    session_id = session.ID
+  ) %>%
+  
+  # 2. Eliminar la variable 'year' (todos son 2008)
+  select(-year) %>%
+  
+  # 3. Filtrar los códigos de dominio de red (43 al 47) en la variable country
+  filter(!country %in% 43:47) %>%
+  
+  # 4. Transformar tipos de datos y asignar etiquetas en español
+  mutate(
+    # Transformaciones a factor con diccionario
+    main_category = factor(main_category, 
+                           levels = 1:4, 
+                           labels = c("pantalones", "faldas", "blusas", "oferta")),
+    
+    colour = factor(colour, 
+                    levels = 1:14, 
+                    labels = c("beige", "negro", "azul", "marron", "bordo", "gris", "verde", 
+                               "azul_marino", "multicolor", "oliva", "rosa", "rojo", "violeta", "blanco")),
+    
+    location = factor(location, 
+                      levels = 1:6, 
+                      labels = c("arriba_izq", "arriba_centro", "arriba_der", 
+                                 "abajo_izq", "abajo_centro", "abajo_der")),
+    
+    model_photography = factor(model_photography, 
+                               levels = 1:2, 
+                               labels = c("de_frente", "de_perfil")),
+    
+    price_category = factor(price_category, 
+                            levels = 1:2, 
+                            labels = c("mayor_promedio", "menor_promedio")),
+    
+    country = factor(country, 
+                     levels = 1:42, 
+                     labels = c(
+                       "Australia", "Austria", "Belgium", "British Virgin Islands", "Cayman Islands",
+                       "Christmas Island", "Croatia", "Cyprus", "Czech Republic", "Denmark",
+                       "Estonia", "unidentified", "Faroe Islands", "Finland", "France",
+                       "Germany", "Greece", "Hungary", "Iceland", "India",
+                       "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+                       "Mexico", "Netherlands", "Norway", "Poland", "Portugal",
+                       "Romania", "Russia", "San Marino", "Slovakia", "Slovenia",
+                       "Spain", "Sweden", "Switzerland", "Ukraine", "United Arab Emirates",
+                       "United Kingdom", "USA"
+                     )),
+    
+    # Transformaciones a factor directas
+    clothing_model = as.factor(clothing_model),
+    session_id = as.factor(session_id),
+    page = as.factor(page)
   )
-)
 
-# 7. Modelo de Ropa (Ej. "A13")
-# Ya contiene letras, pero es bueno que R lo trate como categoría.
-df$clothing_model <- as.factor(df$clothing_model)
-
-# Revisamos la estructura del dataframe para confirmar los cambios
-str(df$colour)
-
-summary(df$country)
-
-#Eliminamos la variable año ya que no aporta información relevante a nuestro estudio
-df <- df %>% select(-year)
-
-#Pasamos la variable session id a factor
-df$session_id <- as.factor(df$session_id)
-
-#Controlamos los cambios realizados
+# Verificar la estructura final
 str(df)
-
-#Volvemos a realizar un análisis estadístico a los datos luego de ser procesados 
 skim(df)
-
 
 # ============================================================
 # ACTIVIDAD b: Análisis Gráfico
@@ -736,4 +717,53 @@ if (length(reglas_secuenciales) > 0) {
 
 # 4. Limpiar archivo temporal
 
-unlink(temp_file)
+# ============================================================
+# ACTIVIDAD F: Encontrar las reglas de asociación de Polonia en blusas.
+# ============================================================
+
+# 1. Filtrar datos y agrupar ítems por sesión
+lista_polonia <- df %>%
+  filter(country == "Poland", main_category == "blusas") %>%
+  group_by(session_id) %>%
+  summarise(items = list(as.character(clothing_model)), .groups = "drop") %>%
+  pull(items)
+
+# 2. Convertir a transacciones
+transacciones_polonia <- as(lista_polonia, "transactions")
+
+# 3. Aplicar Apriori (soporte mínimo 2%, confianza 20%)
+reglas_polonia <- apriori(
+  transacciones_polonia,
+  parameter = list(support = 0.02, confidence = 0.20, target = "rules")
+)
+
+# 4. Mostrar las 10 reglas con mayor soporte
+reglas_polonia_top10 <- head(sort(reglas_polonia, by = "support"), 10)
+cat("\n--- TOP 10 REGLAS: POLONIA (BLUSAS) ---\n")
+inspect(reglas_polonia_top10)
+
+# ============================================================
+# ACTIVIDAD G: Encontrar las reglas de asociación de Republica Checa en blusas.
+# ============================================================
+# 1. Filtrar datos y agrupar ítems por sesión
+lista_checa <- df %>%
+  filter(country == "Czech Republic", main_category == "blusas") %>%
+  group_by(session_id) %>%
+  summarise(items = list(as.character(clothing_model)), .groups = "drop") %>%
+  pull(items)
+
+# 2. Convertir a transacciones
+transacciones_checa <- as(lista_checa, "transactions")
+
+# 3. Aplicar Apriori (soporte mínimo 4%, confianza 25%)
+reglas_checa <- apriori(
+  transacciones_checa,
+  parameter = list(support = 0.04, confidence = 0.25, target = "rules")
+)
+
+# 4. Mostrar las 10 reglas con mayor soporte
+reglas_checa_top10 <- head(sort(reglas_checa, by = "support"), 10)
+cat("\n--- TOP 10 REGLAS: REP. CHECA (BLUSAS) ---\n")
+inspect(reglas_checa_top10)
+
+
