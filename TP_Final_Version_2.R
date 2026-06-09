@@ -8,6 +8,7 @@ library("networkD3")
 library("arules")
 library("arulesViz")
 library("arulesSequences")
+library("scales")
 
 
 df = read.csv2("./data/e-shop clothing 2008.csv")
@@ -36,7 +37,8 @@ df <- df %>%
     main_category = page.1..main.category.,
     clothing_model = page.2..clothing.model.,
     model_photography = model.photography,
-    session_id = session.ID
+    session_id = session.ID,
+    price_category = price.2
   ) %>%
   
   # 2. Eliminar la variable 'year' (todos son 2008)
@@ -98,7 +100,9 @@ skim(df)
 # ACTIVIDAD b: Análisis Gráfico
 # ============================================================
 
-#¿Los usuarios exploran mucho o abandonan rápido?
+#¿Los usuarios exploran mucho o abandonan rápido? 
+#Para mejorar la visualización tomamos hasta los 100 clicks ya que el 75% de los datos se 
+#concentra en entre los 1 a 12 click
 
 summary(df$order)
 
@@ -106,27 +110,28 @@ clicks_sesion <- df %>%
   group_by(session_id) %>%
   summarise(order = n())
 
-
 ggplot(clicks_sesion, aes(x = order)) +
   geom_histogram(
-    bins = 30,
+    bins = 50,
     fill = "#7FFFD4",
     color = "white"
   ) +
-  geom_density(
-    aes(y = after_stat(count)),
-    color = "#CD2626",
-    linewidth = 1
+  coord_cartesian(xlim = c(0, 100)) +  
+  scale_x_continuous(
+    name = "Cantidad de clicks",
+    breaks = seq(0, 100, by = 5),
+    minor_breaks = seq(0, 100, by = 5)
   ) +
   theme_minimal() +
   labs(
-    title = "Distribución de clicks por sesión",
+    title = "Distribución de clicks por sesión (0-100 clicks)",
     subtitle = "Comportamiento de navegación de los usuarios",
-    x = "Cantidad de clicks",
     y = "Frecuencia"
   )
 
 #¿Qué tan diversa es la exploración de productos?
+#Aegmentamos por cantidad de clicks ya que al querer hacerlos en un mismo gráfico 
+#dificultaba la visualizacion de la información
 
 exploracion <- df %>%
   group_by(session_id) %>%
@@ -135,18 +140,18 @@ exploracion <- df %>%
     productos = n_distinct(clothing_model)
   )
 
-ggplot(exploracion,
-       aes(x = order,
-           y = productos)) +
-  geom_point(
-    alpha = 0.4,
-    color = "#D95F0E"
-  ) +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "darkblue"
-  ) +
+exploracion <- exploracion %>%
+  mutate(rango_clicks = case_when(
+    order <= 10 ~ "1-10 clicks",
+    order <= 50 ~ "11-50 clicks",
+    order <= 100 ~ "51-100 clicks",
+    TRUE ~ ">100 clicks"
+  ))
+
+ggplot(exploracion, aes(x = order, y = productos)) +
+  geom_point(alpha = 0.4, color = "#D95F0E") +
+  geom_smooth(method = "lm", se = FALSE, color = "darkblue") +
+  facet_wrap(~rango_clicks, scales = "free_x") +
   theme_minimal() +
   labs(
     title = "Exploración de productos por sesión",
@@ -154,9 +159,8 @@ ggplot(exploracion,
     x = "Cantidad de clicks",
     y = "Productos distintos"
   )
-
 #¿Qué categorías son más fuertes en cada país?
-
+#Filtramos para ver los primeros 20 paises para facilitar la visualización del gráfico
 top_paises <- df %>%
   count(country, sort = TRUE) %>%
   slice_head(n = 20) %>%
@@ -195,27 +199,66 @@ ggplot(pais_categoria,
 
 # ¿Qué países generan más tráfico?
 
-library("rnaturalearth")
-sesiones_pais <- df %>%
-   distinct(session_id, country) %>%
-   count(country)
- 
-world <- ne_countries(scale = "medium", returnclass = "sf")
-
+# Crear líneas de grilla personalizadas
 map_data <- world %>%
-  left_join(sesiones_pais,
-            by = c("name" = "country"))
+  left_join(sesiones_pais, by = c("name" = "country"))
 
+# Crear grilla (asegurarse que custom_grid existe)
+custom_grid <- st_graticule(
+  lat = c(-60, -30, 0, 30, 60),  
+  lon = c(-120, -60, 0, 60, 120)  
+)
 ggplot(map_data) +
-  geom_sf(aes(fill = n)) +
-  scale_fill_viridis_c() +
-  theme_minimal()
-
+  geom_sf(aes(fill = n), color = "white", size = 0.2) +
+  geom_sf(data = custom_grid, color = "gray80", linewidth = 0.3, alpha = 0.5) +
+  
+  # Usamos gradientn para soportar múltiples colores
+  scale_fill_gradientn(
+    name = "Sesiones por país",
+    
+    # Aquí agregas los colores en orden (de menor a mayor valor)
+    # Puedes usar nombres, códigos HEX o paletas predefinidas
+    colors = c("#440154", "#31688E", "#35B779", "#FDE725", "#FF8C00", "#D73027"), 
+    
+    # Definimos los saltos de la escala de 2500 en 2500
+    breaks = scales::breaks_width(2500), 
+    
+    # Mantenemos el formato de los números cortos (ej. 2.5K, 5K)
+    labels = scales::label_number(scale_cut = scales::cut_short_scale()), 
+    na.value = "gray60",
+    
+    # Hacemos la barra de la escala físicamente más ancha y controlamos su grosor
+    guide = guide_colorbar(barwidth = 20, barheight = 1) 
+  ) +
+  
+  coord_sf(
+    xlim = c(-180, 180),
+    ylim = c(-60, 90),
+    expand = FALSE
+  ) +
+  labs(
+    title = "Distribución global de sesiones de usuario",
+    subtitle = "Intensidad de color indica mayor actividad por país",
+    caption = "Nota: Países en gris claro sin datos disponibles",
+    x = "Longitud",
+    y = "Latitud"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    # Eliminamos legend.key.width de aquí, ya que ahora lo controla guide_colorbar() arriba
+    axis.text = element_text(size = 8, color = "gray40"),
+    axis.title = element_text(size = 10, color = "gray50"),
+    panel.grid.major = element_line(color = "gray40", linewidth = 0.2),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 10, color = "gray30")
+  )
 # Precio vs Clicks
 
 clicks_producto <- df %>%
   
-  group_by(clothing_model, price.2) %>%
+  group_by(clothing_model, price_category) %>%
   
   summarise(
     order = n(),
@@ -223,9 +266,9 @@ clicks_producto <- df %>%
   )
 
 ggplot(clicks_producto,
-       aes(x = price.2,
+       aes(x = price_category,
            y = order,
-           fill = price.2)) +
+           fill = price_category)) +
   
   geom_boxplot(alpha = 0.7) +
   
@@ -246,48 +289,6 @@ ggplot(clicks_producto,
   theme(
     legend.position = "none"
   )
-
-#Precio vs Exploración
-
-exploracion_precio <- df %>%
-  
-  group_by(session_id, price.2) %>%
-  
-  summarise(
-    productos_distintos = n_distinct(clothing_model),
-    order = n(),
-    .groups = "drop"
-  )
-
-ggplot(exploracion_precio,
-       aes(x = order,
-           y = productos_distintos,
-           color = price.2)) +
-  
-  geom_point(
-    alpha = 0.5,
-    size = 3
-  ) +
-  
-  geom_smooth(
-    method = "lm",
-    se = FALSE
-  ) +
-  
-  scale_color_manual(values = c(
-    "#D95F0E",
-    "#2C7FB8"
-  )) +
-  
-  labs(
-    title = "Exploración de productos según precio",
-    subtitle = "Relación entre clicks y diversidad de productos",
-    x = "Cantidad de clicks",
-    y = "Productos distintos",
-    color = "Precio"
-  ) +
-  
-  theme_minimal()
 
 #categorías/países
 
