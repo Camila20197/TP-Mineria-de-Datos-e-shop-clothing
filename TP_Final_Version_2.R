@@ -488,7 +488,7 @@ detalle_transacciones <- df %>%
 # Ver las primeras 10 transacciones
 head(detalle_transacciones, 10)
 
-# Un pequeño extra: ¿Cuál es el promedio de ítems por sesión?
+# ¿Cuál es el promedio de ítems por sesión?
 summary(detalle_transacciones$cantidad_items)
 
 # ============================================================
