@@ -1,3 +1,4 @@
+library("knitr")
 library("dplyr")
 library("tidyverse")
 library("skimr")
@@ -716,6 +717,12 @@ if (length(reglas_secuenciales) > 0) {
   inspect(head(reglas_ordenadas, 10))
 }
 
+tabla_secuencias <- as(secuencias_ordenadas[1:15], "data.frame")
+
+kable(tabla_secuencias, 
+      caption = "Top 15 Secuencias Frecuentes de Navegación",
+      row.names = FALSE)
+
 # 4. Limpiar archivo temporal
 
 # ============================================================
@@ -743,6 +750,13 @@ reglas_polonia_top10 <- head(sort(reglas_polonia, by = "support"), 10)
 cat("\n--- TOP 10 REGLAS: POLONIA (BLUSAS) ---\n")
 inspect(reglas_polonia_top10)
 
+tabla_polonia <- as(reglas_polonia_top10, "data.frame")
+
+kable(tabla_polonia, 
+      digits = 3,
+      caption = "Top 10 Reglas de Asociación: Polonia (Blusas)",
+      row.names = FALSE)
+
 # ============================================================
 # ACTIVIDAD G: Encontrar las reglas de asociación de Republica Checa en blusas.
 # ============================================================
@@ -766,5 +780,12 @@ reglas_checa <- apriori(
 reglas_checa_top10 <- head(sort(reglas_checa, by = "support"), 10)
 cat("\n--- TOP 10 REGLAS: REP. CHECA (BLUSAS) ---\n")
 inspect(reglas_checa_top10)
+
+tabla_checa <- as(reglas_checa_top10, "data.frame")
+
+kable(tabla_checa, 
+      digits = 3,
+      caption = "Top 10 Reglas de Asociación: República Checa (Blusas)",
+      row.names = FALSE)
 
 

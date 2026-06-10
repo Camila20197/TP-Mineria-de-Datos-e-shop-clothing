@@ -131,3 +131,16 @@ Polonia presentó niveles de interacción considerablemente superiores al resto 
 El análisis de las interacciones revela que la arquitectura espacial de la interfaz condiciona el tráfico de usuarios, concentrando la atención en el cuadrante superior izquierdo. Donde la categoría pantalones alcanza un pico de 10855 clicks, y perdiendo retención progresivamente hasta el extremo opuesto, con un mínimo de 3.423 clicks para faldas, lo que demuestra empíricamente la necesidad estratégica de reservar los bloques superiores de la pantalla para el inventario de mayor prioridad comercial. 
 
 ![](images/clipboard-1082017081.png)
+
+
+Para esta parte del análisis, comparamos cómo se comportan los usuarios de Polonia... (aquí va tu texto redactado). Los detalles exactos de los modelos y los porcentajes de las reglas que encontramos se pueden observar en la tabla adjunta:
+
+```{r tabla-polonia, echo=FALSE, message=FALSE, warning=FALSE}
+# Convertimos las reglas que ya tenés guardadas en el script a dataframe
+tabla_polonia <- as(reglas_polonia_top10, "data.frame")
+
+# Generamos la tabla con kable
+knitr::kable(tabla_polonia, 
+             digits = 3, 
+             caption = "Top 10 Reglas de Asociación: Polonia (Categoría Blusas)", 
+             row.names = FALSE)
