@@ -236,7 +236,7 @@ Las secuencias más frecuentes muestran un comportamiento de **exploración repe
 - Este patrón se repite para faldas (31.7%) y blusas (29.1%)
 
 | N°  | Secuencia                                               | Soporte (%) |
-|:----|:--------------------------------------------------------|:------------|
+|:----------------|:--------------------------------------|:----------------|
 | 1   | \<{pantalones}\>                                        | 54.45       |
 | 2   | \<{faldas}\>                                            | 48.06       |
 | 3   | \<{blusas}\>                                            | 44.61       |
@@ -264,7 +264,7 @@ Se realizó una investigación extra para observar las reglas secuenciales con m
 3.  **Lift mayor a 1:** La asociación entre exploración intensiva y visita a ofertas es estadísticamente significativa.
 
 | N° | Regla (LHS → RHS) | Soporte (%) | Confianza (%) | Lift |
-|:---|:---|:---|:---|:---|
+|:--------------|:--------------|:--------------|:--------------|:--------------|
 | 1 | \<{blusas},{blusas},{blusas},{oferta}\> → \<{oferta}\> | 5.55 | 77.84 | 2.00 |
 | 2 | \<{pantalones},{faldas},{blusas},{oferta}\> → \<{oferta}\> | 2.14 | 77.43 | 1.98 |
 | 3 | \<{blusas},{blusas},{oferta},{oferta}\> → \<{oferta}\> | 5.67 | 77.00 | 1.97 |
@@ -276,14 +276,48 @@ Se realizó una investigación extra para observar las reglas secuenciales con m
 | 9 | \<{blusas},{oferta},{oferta},{oferta}\> → \<{oferta}\> | 5.46 | 75.58 | 1.94 |
 | 10 | \<{pantalones},{oferta},{oferta},{oferta}\> → \<{oferta}\> | 5.76 | 75.54 | 1.94 |
 
-Para esta parte del análisis, comparamos cómo se comportan los usuarios de Polonia... (aquí va tu texto redactado). Los detalles exactos de los modelos y los porcentajes de las reglas que encontramos se pueden observar en la tabla adjunta:
+Para esta parte del análisis, comparamos cómo se comportan los usuarios de Polonia de la República Checa al navegar por la categoría de blusas. Nuestro objetivo es entender sus hábitos para poder mejorar el sistema de recomendaciones. Los detalles exactos de los modelos y los porcentajes de las reglas que encontramos se pueden observar en la tabla adjunta.
 
-| rules           | support | confidence | coverage |  lift | count |
-|:----------------|--------:|-----------:|---------:|------:|------:|
-| {C57} =\> {C56} |   0.051 |      0.428 |    0.120 | 2.909 |    62 |
-| {C56} =\> {C57} |   0.051 |      0.348 |    0.147 | 2.909 |    62 |
-| {C50} =\> {C49} |   0.050 |      0.492 |    0.101 | 4.136 |    60 |
-| {C49} =\> {C50} |   0.050 |      0.417 |    0.119 | 4.136 |    60 |
-| {C29} =\> {C40} |   0.044 |      0.510 |    0.086 | 4.087 |    53 |
-| {C40} =\> {C29} |   0.044 |      0.351 |    0.125 | 4.087 |    53 |
-| {C17} =\> {C5}  |   0.043 |      0.277 |    0.155 | 1.456 |    52 |
+## Top 10 Reglas de Asociación: Polonia (Blusas)
+
+|rules          | support| confidence| coverage|  lift| count|
+|:--------------|-------:|----------:|--------:|-----:|-----:|
+|{C12} => {C17} |   0.030|      0.377|    0.079| 2.911|   252|
+|{C17} => {C12} |   0.030|      0.229|    0.130| 2.911|   252|
+|{C17} => {C5}  |   0.028|      0.219|    0.130| 1.455|   241|
+|{C7} => {C5}   |   0.028|      0.295|    0.095| 1.954|   238|
+|{C1} => {C17}  |   0.024|      0.256|    0.094| 1.975|   204|
+|{C12} => {C5}  |   0.022|      0.283|    0.079| 1.877|   189|
+|{C14} => {C5}  |   0.022|      0.215|    0.102| 1.425|   186|
+|{C57} => {C56} |   0.022|      0.343|    0.063| 3.769|   183|
+|{C56} => {C57} |   0.022|      0.237|    0.091| 3.769|   183|
+|{C11} => {C17} |   0.022|      0.287|    0.075| 2.216|   183|
+
+Al mirar los datos de Polonia en la tabla, notamos que el comportamiento de búsqueda de la gente es bastante variado. Para poder encontrar patrones claros, tuvimos que pedirle al algoritmo que sea un poco menos exigente. Los resultados nos demuestran que, si bien los usuarios polacos suelen comparar ciertas prendas, en general tienen una navegación dispersa y les gusta explorar muchas opciones distintas durante su sesión.
+
+## Top 10 Reglas de Asociación: República Checa (Blusas)
+
+|rules          | support| confidence| coverage|  lift| count|
+|:--------------|-------:|----------:|--------:|-----:|-----:|
+|{C57} => {C56} |   0.051|      0.428|    0.120| 2.909|    62|
+|{C56} => {C57} |   0.051|      0.348|    0.147| 2.909|    62|
+|{C50} => {C49} |   0.050|      0.492|    0.101| 4.136|    60|
+|{C49} => {C50} |   0.050|      0.417|    0.119| 4.136|    60|
+|{C29} => {C40} |   0.044|      0.510|    0.086| 4.087|    53|
+|{C40} => {C29} |   0.044|      0.351|    0.125| 4.087|    53|
+|{C17} => {C5}  |   0.043|      0.277|    0.155| 1.456|    52|
+
+Por el contrario, en la República Checa nos encontramos con un público mucho más predecible. Como se ve en los números de la tabla, incluso siendo bastante más estrictos con los filtros del algoritmo, encontramos asociaciones muy fuertes y con un nivel de confianza alto. Esto nos indica que los consumidores checos tienen un recorrido de navegación directo y repiten constantemente la comparación entre pares de prendas muy puntuales, sin dar tantas vueltas por el catálogo.
+
+Como conclusión principal que podemos sacar de todo esto es que no podemos usar la misma estrategia comercial para toda la página web. Como en la República Checa los clientes tienen hábitos tan marcados y directos, nos conviene poner un sistema de venta cruzada justo debajo de las fotos, ofreciendo exactamente esa otra blusa que sabemos que siempre miran. En cambio, en Polonia, la estrategia de recomendaciones tendría que mostrar un carrusel más abierto y variado, con varias opciones diferentes, para adaptarse a ese estilo de navegación más exploratorio que tienen.
+
+# Conclusiones:
+
+A partir del análisis exhaustivo del comportamiento de navegación en el e-commerce, se han identificado patrones clave para la optimización de la plataforma. En primer lugar, los hábitos de exploración muestran una distribución fuertemente asimétrica hacia la derecha, donde aproximadamente el 75% de las sesiones registran entre 1 y 12 clics. Sin embargo, a medida que aumenta la cantidad de interacciones, los usuarios tienden a visualizar una mayor diversidad de productos, tal como se evidencia en los gráficos de dispersión sobre la exploración por sesión. Además, el análisis secuencial reveló que la navegación suele ser repetitiva dentro de una misma categoría y que la sección de "ofertas" funciona como el destino final del recorrido, con reglas secuenciales que alcanzan confianzas superiores al 75%.
+
+En cuanto a la interfaz web y el impacto de los precios, se comprobó que la arquitectura espacial de la página condiciona directamente el tráfico. El mapa de calor sobre la distribución de clics según la posición en pantalla demuestra empíricamente que la atención se concentra en el cuadrante superior izquierdo, donde la categoría de pantalones alcanzó un pico de 10.855 interacciones, lo que justifica reservar este sector estratégico para el inventario de mayor prioridad. Paralelamente, los diagramas de caja del análisis de precio indican que los productos con un valor superior al promedio logran un volumen de clics ligeramente mayor en comparación con los artículos más económicos.
+
+Por otro lado, la aplicación de los algoritmos Apriori y ECLAT evidenció que los clientes no navegan por categorías aisladas, sino que buscan conjuntos o "outfits" compatibles. La tabla de itemsets a nivel general destaca la fuerte visualización conjunta de blusas y pantalones, combinación que posee un soporte del 24.82%. A nivel estético, la tabla de frecuencias de colores indica que los tonos neutros como el negro, azul y marrón dominan las búsquedas, descubriéndose además asociaciones cruzadas específicas de alto valor comercial, como la exploración conjunta de blusas blancas con pantalones azules.
+
+Finalmente, la comparativa internacional demostró que no es viable aplicar una única estrategia comercial para toda la web. Al observar las reglas de asociación específicas por país, se nota que en Polonia (el mercado con mayor volumen de tráfico global) la navegación es muy variada y dispersa, lo que sugiere que su estrategia de recomendaciones debería basarse en carruseles abiertos y diversos. Por el contrario, en la República Checa los consumidores exhiben un comportamiento altamente predecible y directo, por lo que resulta más efectivo implementar un sistema de venta cruzada estricto directamente debajo de las fotos de los productos que ya están evaluando.
+
