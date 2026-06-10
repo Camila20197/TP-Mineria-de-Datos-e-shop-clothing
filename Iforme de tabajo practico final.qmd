@@ -84,7 +84,7 @@ Decisiones de limpieza:**
 
 **Observación clave:** La distribución de clicks por sesión está fuertemente sesgada a la derecha (media 9.9, mediana 6), indicando que la mayoría de los usuarios realizan navegaciones cortas, mientras que una minoría explora extensivamente.
 
-# Análisis gráfico 
+# Análisis gráfico
 
 ## Distribución de clicks por sesión
 
@@ -132,15 +132,158 @@ El análisis de las interacciones revela que la arquitectura espacial de la inte
 
 ![](images/clipboard-1082017081.png)
 
+# Conjunto de itemsets frecuentes
+
+### Metodología
+
+Para identificar productos que suelen visualizarse conjuntamente, se aplicaron los algoritmos **Apriori** y **ECLAT** con un soporte mínimo del 2% y longitud mínima de 2 ítems. Se analizaron tres niveles de granularidad:
+
+- **Nivel general:** Solo categorías principales, 4 ítems. Objetivo: Patrones generales de navegación.
+
+- **Nivel específico:** Categoría + modelo de ropa, 218 ítems. Objetivo: Cross-selling preciso.
+
+- **Nivel moda:** Categoría + color, 43 ítems. Objetivo: Tendencias de color.
+
+### Resultados - nivel general (solo Categoría)
+
+Los usuarios no navegan categorías aisladas, exploran conjuntos compatibles de prendas. Existe la posibilidad de que los usuarios exploren outfits completos.
+
+| N°  | Itemset                      | Soporte (%) | Conteo |
+|:----|:-----------------------------|:------------|:-------|
+| 1   | {blusas, pantalones}         | 24.82       | 5,732  |
+| 2   | {faldas, pantalones}         | 22.67       | 5,235  |
+| 3   | {blusas, faldas}             | 20.96       | 4,841  |
+| 4   | {oferta, pantalones}         | 20.65       | 4,769  |
+| 5   | {blusas, oferta}             | 19.23       | 4,442  |
+| 6   | {faldas, oferta}             | 17.77       | 4,104  |
+| 7   | {blusas, faldas, pantalones} | 13.92       | 3,215  |
+| 8   | {blusas, oferta, pantalones} | 11.90       | 2,749  |
+| 9   | {faldas, oferta, pantalones} | 10.85       | 2,506  |
+| 10  | {blusas, faldas, oferta}     | 10.64       | 2,458  |
+
+### Resultados - nivel específico (Categoría + Modelo)
+
+En este caso estudiamos productos en concreto, existen grupos de productos específicos que se exploran conjuntamente de manera recurrente. Los usuarios observan activamente productos dentro de una misma categoría antes de continuar navegando.
+
+| N°  | Itemset                         | Soporte (%) | Conteo |
+|:----|:--------------------------------|:------------|:-------|
+| 1   | {faldas_B10, faldas_B13}        | 3.71        | 856    |
+| 2   | {pantalones_A2, pantalones_A5}  | 3.67        | 847    |
+| 3   | {pantalones_A1, pantalones_A2}  | 3.64        | 841    |
+| 4   | {pantalones_A11, pantalones_A2} | 3.49        | 805    |
+| 5   | {pantalones_A2, pantalones_A3}  | 3.40        | 786    |
+| 6   | {pantalones_A10, pantalones_A2} | 2.96        | 684    |
+| 7   | {pantalones_A10, pantalones_A9} | 2.89        | 667    |
+| 8   | {pantalones_A3, pantalones_A5}  | 2.88        | 666    |
+| 9   | {pantalones_A1, pantalones_A11} | 2.75        | 636    |
+| 10  | {pantalones_A2, pantalones_A7}  | 2.74        | 632    |
+
+### Resultados - nivel moda (Categoría + Color)
+
+Los usuarios comparan variantes visuales, mismo producto diferentes colores, del mismo tipo de producto, los colores más buscados son negro, azul y marrón. Además, **las blusas blancas** se asocian con pantalones azules con un soporte del 8.0%.
+
+| N°  | Itemset                             | Soporte (%) | Conteo |
+|:----|:------------------------------------|:------------|:-------|
+| 1   | {pantalones_azul, pantalones_negro} | 11.52       | 2,661  |
+| 2   | {oferta_marron, oferta_negro}       | 9.91        | 2,289  |
+| 3   | {faldas_negro, faldas_rojo}         | 9.41        | 2,173  |
+| 4   | {pantalones_azul, pantalones_beige} | 9.40        | 2,170  |
+| 5   | {blusas_blanco, pantalones_azul}    | 8.01        | 1,850  |
+| 6   | {oferta_marron, pantalones_azul}    | 7.85        | 1,813  |
+| 7   | {blusas_blanco, blusas_gris}        | 7.76        | 1,792  |
+| 8   | {blusas_gris, pantalones_azul}      | 7.55        | 1,744  |
+| 9   | {oferta_negro, pantalones_azul}     | 7.32        | 1,691  |
+| 10  | {faldas_negro, pantalones_azul}     | 7.29        | 1,684  |
+
+### Colores Más Frecuentes en Combinaciones
+
+**El color negro es el más frecuente** con 122 apariciones, seguido por azul con 76 y marrón con 44. Además, **los colores neutros**, negro, azul, beige, gris, predominan sobre tonos vibrantes, rojo, rosa, violeta.
+
+| N°  | Color      | Frecuencia (n) |
+|:----|:-----------|:---------------|
+| 1   | Negro      | 122            |
+| 2   | Azul       | 76             |
+| 3   | Marrón     | 44             |
+| 4   | Verde      | 36             |
+| 5   | Beige      | 33             |
+| 6   | Violeta    | 30             |
+| 7   | Rojo       | 28             |
+| 8   | Multicolor | 27             |
+| 9   | Gris       | 25             |
+| 10  | Blanco     | 17             |
+
+### Cuadro comparativo: Apriori vs ECLAT
+
+| Nivel de análisis | Algoritmo | Itemsets encontrados | Tiempo de ejecución (seg) | Diferencia |
+|:--------------|:--------------|:--------------|:--------------|:--------------|
+| **General** | Apriori | 11 | 0.03 | – |
+|  | ECLAT | 11 | 0.02 | ECLAT fue el **más rápido** |
+| **Específico** | Apriori | 66 | 0.03 | – |
+|  | ECLAT | 66 | 0.06 | Apriori fue el **más rápido** |
+| **Moda** | Apriori | 470 | 0.03 | – |
+|  | ECLAT | 470 | 0.04 | ECLAT fue más **más lento** |
+
+# Análisis de los patrones secuenciales
+
+## Top 15 secuencias frecuentes de navegación
+
+Las secuencias más frecuentes muestran un comportamiento de **exploración repetitiva, l**os usuarios tienden a **mirar productos similares** :
+
+- `<{pantalones},{pantalones}>` (37.4%): Usuarios que ven un pantalón, ven otro pantalón después
+
+- `<{pantalones},{pantalones},{pantalones}>` (26.3%): Comparación de múltiples pantalones
+
+- Este patrón se repite para faldas (31.7%) y blusas (29.1%)
+
+| N°  | Secuencia                                               | Soporte (%) |
+|:----|:--------------------------------------------------------|:------------|
+| 1   | \<{pantalones}\>                                        | 54.45       |
+| 2   | \<{faldas}\>                                            | 48.06       |
+| 3   | \<{blusas}\>                                            | 44.61       |
+| 4   | \<{oferta}\>                                            | 39.02       |
+| 5   | \<{pantalones},{pantalones}\>                           | 37.43       |
+| 6   | \<{faldas},{faldas}\>                                   | 31.67       |
+| 7   | \<{blusas},{blusas}\>                                   | 29.11       |
+| 8   | \<{pantalones},{pantalones},{pantalones}\>              | 26.34       |
+| 9   | \<{oferta},{oferta}\>                                   | 26.18       |
+| 10  | \<{faldas},{faldas},{faldas}\>                          | 21.77       |
+| 11  | \<{blusas},{blusas},{blusas}\>                          | 20.31       |
+| 12  | \<{pantalones},{pantalones},{pantalones},{pantalones}\> | 19.05       |
+| 13  | \<{oferta},{oferta},{oferta}\>                          | 18.67       |
+| 14  | \<{pantalones},{blusas}\>                               | 18.36       |
+| 15  | \<{pantalones},{faldas}\>                               | 15.46       |
+
+## Reglas secuenciales con mayor confianza
+
+Se realizó una investigación extra para observar las reglas secuenciales con mayor confianza en la cual obtuvimos lo siguiente:
+
+1.  **La categoría "oferta" actúa como destino final:** Múltiples reglas muestran que después de explorar varias categorías com blusas, pantalones ofaldas; los usuarios terminan en la sección de ofertas.
+
+2.  **Confianzas muy altas:** Si un usuario ha visto 3 o más productos de una categoría, la probabilidad de que luego vea la sección de ofertas es muy alta.
+
+3.  **Lift mayor a 1:** La asociación entre exploración intensiva y visita a ofertas es estadísticamente significativa.
+
+| N° | Regla (LHS → RHS) | Soporte (%) | Confianza (%) | Lift |
+|:---|:---|:---|:---|:---|
+| 1 | \<{blusas},{blusas},{blusas},{oferta}\> → \<{oferta}\> | 5.55 | 77.84 | 2.00 |
+| 2 | \<{pantalones},{faldas},{blusas},{oferta}\> → \<{oferta}\> | 2.14 | 77.43 | 1.98 |
+| 3 | \<{blusas},{blusas},{oferta},{oferta}\> → \<{oferta}\> | 5.67 | 77.00 | 1.97 |
+| 4 | \<{pantalones},{blusas},{blusas},{oferta}\> → \<{oferta}\> | 3.72 | 76.90 | 1.97 |
+| 5 | \<{faldas},{blusas},{blusas},{oferta}\> → \<{oferta}\> | 2.92 | 76.59 | 1.96 |
+| 6 | \<{pantalones},{blusas},{oferta},{oferta}\> → \<{oferta}\> | 3.67 | 76.33 | 1.96 |
+| 7 | \<{oferta},{oferta},{oferta},{oferta}\> → \<{oferta}\> | 10.66 | 76.03 | 1.95 |
+| 8 | \<{pantalones},{pantalones},{pantalones},{oferta}\> → \<{oferta}\> | 6.31 | 75.85 | 1.94 |
+| 9 | \<{blusas},{oferta},{oferta},{oferta}\> → \<{oferta}\> | 5.46 | 75.58 | 1.94 |
+| 10 | \<{pantalones},{oferta},{oferta},{oferta}\> → \<{oferta}\> | 5.76 | 75.54 | 1.94 |
 
 Para esta parte del análisis, comparamos cómo se comportan los usuarios de Polonia... (aquí va tu texto redactado). Los detalles exactos de los modelos y los porcentajes de las reglas que encontramos se pueden observar en la tabla adjunta:
 
-```{r tabla-polonia, echo=FALSE, message=FALSE, warning=FALSE}
-# Convertimos las reglas que ya tenés guardadas en el script a dataframe
-tabla_polonia <- as(reglas_polonia_top10, "data.frame")
-
-# Generamos la tabla con kable
-knitr::kable(tabla_polonia, 
-             digits = 3, 
-             caption = "Top 10 Reglas de Asociación: Polonia (Categoría Blusas)", 
-             row.names = FALSE)
+| rules           | support | confidence | coverage |  lift | count |
+|:----------------|--------:|-----------:|---------:|------:|------:|
+| {C57} =\> {C56} |   0.051 |      0.428 |    0.120 | 2.909 |    62 |
+| {C56} =\> {C57} |   0.051 |      0.348 |    0.147 | 2.909 |    62 |
+| {C50} =\> {C49} |   0.050 |      0.492 |    0.101 | 4.136 |    60 |
+| {C49} =\> {C50} |   0.050 |      0.417 |    0.119 | 4.136 |    60 |
+| {C29} =\> {C40} |   0.044 |      0.510 |    0.086 | 4.087 |    53 |
+| {C40} =\> {C29} |   0.044 |      0.351 |    0.125 | 4.087 |    53 |
+| {C17} =\> {C5}  |   0.043 |      0.277 |    0.155 | 1.456 |    52 |
