@@ -130,9 +130,31 @@ ggplot(clicks_sesion, aes(x = order)) +
     y = "Frecuencia"
   )
 
+
+
+#Categorías por sesion
+
+categorias_top <- df %>%
+  count(main_category, sort = TRUE)
+
+ggplot(categorias_top,
+       aes(x = reorder(main_category, n),
+           y = n,
+           fill = main_category)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Categorías más vistas",
+    x = "Categoría",
+    y = "Cantidad de vistas"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
 #¿Qué tan diversa es la exploración de productos?
 #Aegmentamos por cantidad de clicks ya que al querer hacerlos en un mismo gráfico 
 #dificultaba la visualizacion de la información
+
 
 exploracion <- df %>%
   group_by(session_id) %>%
@@ -160,6 +182,24 @@ ggplot(exploracion, aes(x = order, y = productos)) +
     x = "Cantidad de clicks",
     y = "Productos distintos"
   )
+
+#Exploracion de modelos por sesion
+
+productos_top <- df %>%
+  count(clothing_model, sort = TRUE) %>%
+  slice_head(n = 15)
+
+ggplot(productos_top,
+       aes(x = reorder(clothing_model, n),
+           y = n)) +
+  geom_col(fill = "#41AB5D") +
+  coord_flip() +
+  labs(
+    title = "Top 15 productos más vistos",
+    x = "Producto",
+    y = "Cantidad de vistas"
+  ) +
+  theme_minimal()
 #¿Qué categorías son más fuertes en cada país?
 #Filtramos para ver los primeros 20 paises para facilitar la visualización del gráfico
 top_paises <- df %>%
@@ -201,6 +241,17 @@ ggplot(pais_categoria,
 # ¿Qué países generan más tráfico?
 
 # Crear líneas de grilla personalizadas
+
+sesiones_pais <- df %>%
+  group_by(country) %>%
+  summarise(
+    n = n_distinct(session_id),
+    .groups = "drop"
+  )
+
+world <- ne_countries(scale = "medium",
+                      returnclass = "sf")
+
 map_data <- world %>%
   left_join(sesiones_pais, by = c("name" = "country"))
 
@@ -661,6 +712,52 @@ if (length(itemsets_moda_eclat) > 0) {
 # ACTIVIDAD i: Minería de Secuencias Frecuentes
 # ============================================================
 
+# Preparar datos para secuencias (solo modelos)
+
+df_secuencias_modelos <- df %>%
+  select(session_id, order, clothing_model) %>%
+  rename(sequenceID = session_id, eventID = order, item = clothing_model) %>%
+  mutate(
+    sequenceID = as.integer(sequenceID),
+    eventID = as.integer(eventID),
+    item = as.character(item),
+    SIZE = 1
+  ) %>%
+  filter(!is.na(item))
+
+# Guardar a archivo temporal
+temp_file_modelos <- tempfile()
+write.table(
+  df_secuencias_modelos[, c("sequenceID", "eventID", "SIZE", "item")],
+  file = temp_file_modelos,
+  row.names = FALSE,
+  col.names = FALSE,
+  sep = " "
+)
+
+# Leer como secuencias
+secuencias_modelos <- read_baskets(temp_file_modelos, info = c("sequenceID", "eventID", "SIZE"))
+
+# Encontrar secuencias frecuentes con cSPADE
+
+secuencias_frecuentes_modelos <- cspade(
+  secuencias_modelos,
+  parameter = list(
+    support = 0.02,    # Soporte mínimo 2%
+    maxlen = 5,        # Máximo 5 elementos
+    mingap = 1,        # Mínimo 1 evento de diferencia
+    maxgap = 10
+  ),
+  control = list(verbose = TRUE)
+)
+
+cat("Secuencias frecuentes encontradas:", length(secuencias_frecuentes_modelos), "\n")
+
+# Ordenar y mostrar top 15
+secuencias_ordenadas_modelo <- sort(secuencias_frecuentes_modelos, by = "support", decreasing = TRUE)
+cat(" TOP 15 SECUENCIAS:")
+inspect(secuencias_ordenadas_modelo[1:min(15, length(secuencias_ordenadas_modelo))])
+
 # Preparar datos para secuencias (solo categorías)
 
 df_secuencias <- df %>%
@@ -704,6 +801,7 @@ cat("Secuencias frecuentes encontradas:", length(secuencias_frecuentes), "\n")
 secuencias_ordenadas <- sort(secuencias_frecuentes, by = "support", decreasing = TRUE)
 cat(" TOP 15 SECUENCIAS:")
 inspect(secuencias_ordenadas[1:min(15, length(secuencias_ordenadas))])
+
 
 # Generar reglas secuenciales 
 reglas_secuenciales <- ruleInduction(
