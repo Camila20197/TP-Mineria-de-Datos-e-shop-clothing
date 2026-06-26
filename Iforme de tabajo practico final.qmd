@@ -100,6 +100,18 @@ En particular:
 
 ![](images/clipboard-3092229027.png)
 
+## **Categorías más vistas**
+
+La gráfica muestra que la categoría **pantalones** concentra la mayor cantidad de interacciones, alcanzando aproximadamente 48.000 visualizaciones. En segundo lugar aparecen las categorías **oferta**, **blusas** y **faldas**, con niveles de interacción relativamente similares.
+
+![](images/clipboard-1437974471.png)
+
+## **Productos más vistos**
+
+La gráfica muestra los quince productos con mayor cantidad de visualizaciones. El producto **B4** lidera claramente el ranking, seguido por **A2**, **A11** y **P1**.
+
+![](images/clipboard-3825128063.png)
+
 ## Análisis de precio
 
 El análisis de los diagramas de caja indica que los productos con un precio superior al promedio presentan un volumen de clics ligeramente mayor y una dispersión más amplia en sus interacciones. Por el contrario, los artículos más económicos muestran interacciones más bajas y concentradas, aunque ambos grupos registran valores atípicos significativos que logran superar los 2500 clics.
@@ -131,6 +143,14 @@ Polonia presentó niveles de interacción considerablemente superiores al resto 
 El análisis de las interacciones revela que la arquitectura espacial de la interfaz condiciona el tráfico de usuarios, concentrando la atención en el cuadrante superior izquierdo. Donde la categoría pantalones alcanza un pico de 10855 clicks, y perdiendo retención progresivamente hasta el extremo opuesto, con un mínimo de 3.423 clicks para faldas, lo que demuestra empíricamente la necesidad estratégica de reservar los bloques superiores de la pantalla para el inventario de mayor prioridad comercial. 
 
 ![](images/clipboard-1082017081.png)
+
+# **Evolución temporal de los clics**
+
+La gráfica presenta la evolución de la cantidad total de clics entre abril y agosto de 2008. Se observa un volumen elevado de actividad durante abril, seguido por una disminución gradual en los meses posteriores. Julio muestra una leve recuperación respecto de junio, mientras que agosto registra una caída pronunciada.
+
+Este comportamiento indica que la intensidad de navegación no fue uniforme a lo largo del período analizado, aunque los patrones de exploración identificados mediante minería secuencial se mantuvieron consistentes independientemente del volumen total de tráfico.
+
+![](images/clipboard-949634801.png)
 
 # Conjunto de itemsets frecuentes
 
@@ -236,7 +256,7 @@ Las secuencias más frecuentes muestran un comportamiento de **exploración repe
 - Este patrón se repite para faldas (31.7%) y blusas (29.1%)
 
 | N°  | Secuencia                                               | Soporte (%) |
-|:------------|:----------------------------------------------|:------------|
+|:-----------------|:-----------------------------------|:-----------------|
 | 1   | \<{pantalones}\>                                        | 54.45       |
 | 2   | \<{faldas}\>                                            | 48.06       |
 | 3   | \<{blusas}\>                                            | 44.61       |
@@ -252,6 +272,38 @@ Las secuencias más frecuentes muestran un comportamiento de **exploración repe
 | 13  | \<{oferta},{oferta},{oferta}\>                          | 18.67       |
 | 14  | \<{pantalones},{blusas}\>                               | 18.36       |
 | 15  | \<{pantalones},{faldas}\>                               | 15.46       |
+
+## **Top 15 secuencias frecuentes de modelos**
+
+A diferencia de las categorías, las secuencias más frecuentes de modelos corresponden únicamente a secuencias de longitud uno.
+
+Los modelos más visitados fueron:
+
+- **B4 (13,56%)**: modelo con mayor presencia en las sesiones de navegación.
+
+- **A2 (10,63%)** y **A11 (10,37%)**: productos que también concentran una parte importante de las visualizaciones.
+
+- Los modelos **B10**, **P1**, **A15** y **A4** presentan soportes cercanos al 10%, mostrando un interés relativamente homogéneo entre varios productos destacados.
+
+Este comportamiento sugiere que los usuarios exploran una variedad de modelos dentro de una misma categoría, sin seguir patrones de navegación repetitivos entre productos específicos.
+
+| **N°** | **Secuencia** | **Soporte (%)** |
+|--------|---------------|----------------:|
+| 1      | \<{B4}\>      |           13.56 |
+| 2      | \<{A2}\>      |           10.63 |
+| 3      | \<{A11}\>     |           10.37 |
+| 4      | \<{B10}\>     |           10.25 |
+| 5      | \<{P1}\>      |            9.64 |
+| 6      | \<{A15}\>     |            9.45 |
+| 7      | \<{A4}\>      |            9.32 |
+| 8      | \<{A1}\>      |            8.81 |
+| 9      | \<{A5}\>      |            8.08 |
+| 10     | \<{B13}\>     |            7.59 |
+| 11     | \<{A10}\>     |            7.52 |
+| 12     | \<{A12}\>     |            6.99 |
+| 13     | \<{B24}\>     |            6.93 |
+| 14     | \<{C5}\>      |            6.85 |
+| 15     | \<{A3}\>      |            6.80 |
 
 ## Reglas secuenciales con mayor confianza
 
